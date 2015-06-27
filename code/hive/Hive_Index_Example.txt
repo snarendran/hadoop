@@ -1,0 +1,105 @@
+User the following source file for following examples
+
+Z:\DATAMANAGEMENT-DEV\HDP Sessions\data\accounts\accounts.csv
+
+Generic examples of Index syntax
+
+** COMPACT INDEX*****
+CREATE INDEX employees_index
+ON TABLE employees (country)
+AS 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'
+WITH DEFERRED REBUILD
+IDXPROPERTIES ('creator = 'me', 'created_at' = 'some_time')
+IN TABLE employees_index_table
+PARTITIONED BY (country, name)
+COMMENT 'Employees indexed by country and name.';
+*********************
+
+** BITMAP INDEX*****
+CREATE INDEX employees_index
+ON TABLE employees (country)
+AS 'BITMAP'
+WITH DEFERRED REBUILD
+IDXPROPERTIES ('creator = 'me', 'created_at' = 'some_time')
+IN TABLE employees_index_table
+PARTITIONED BY (country, name)
+COMMENT 'Employees indexed by country and name.';
+**********************
+
+**************************** Example using External Table *************************************
+
+create external table if not exists accounts (
+account_id int,
+open_dt timestamp,
+exp_dt timestamp,
+fname STRING,
+lname string,
+address string,
+city string,
+state string,
+zip int,
+account_num string,
+rec_ins_dt timestamp,
+rec_upd_dt timestamp)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/amit';
+
+select * from accounts where account_id=1;
+
+create INDEX accounts_id_index ON TABLE accounts(account_id) as 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'  WITH DEFERRED REBUILD;
+
+ALTER INDEX  accounts_id_index ON accounts REBUILD; 
+
+
+INSERT OVERWRITE DIRECTORY "/tmp/index_accounts" SELECT `_bucketname` , `_offsets` FROM hadoop_poc__accounts_accounts_id_index__ where account_id=1 ;
+
+SET hive.index.compact.file=/tmp/index_accounts;
+
+SET hive.input.format=org.apache.hadoop.hive.ql.index.compact.HiveCompactIndexInputFormat;
+
+select * from accounts where account_id=1; // This should be using Index now
+
+Explain select * from accounts where account_id=1; // This should be showing IndexInputFormat if this query is using Index
+
+====================================================
+
+
+=========================================================
+
+**************************** Example using Managed Table *************************************
+
+create table if not exists accounts1 (
+account_id int,
+open_dt timestamp,
+exp_dt timestamp,
+fname STRING,
+lname string,
+address string,
+city string,
+state string,
+zip int,
+account_num string,
+rec_ins_dt timestamp,
+rec_upd_dt timestamp)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+
+LOAD DATA INPATH '/amit' OVERWRITE INTO TABLE accounts1;
+
+
+select * from accounts1 where account_id=1;
+
+create INDEX accounts1_id_index1 ON TABLE accounts1(account_id) as 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler'  WITH DEFERRED REBUILD;
+
+ALTER INDEX  accounts1_id_index ON accounts1 REBUILD; 
+
+
+INSERT OVERWRITE DIRECTORY "/tmp/index_accounts1" SELECT `_bucketname` , `_offsets` FROM hadoop_poc__accounts1_accounts1_id_index__ where account_id=1 ;
+
+SET hive.index.compact.file=/tmp/index_accounts1;
+
+SET hive.input.format=org.apache.hadoop.hive.ql.index.compact.HiveCompactIndexInputFormat;
+
+select * from accounts1 where account_id=1; // This should be using Index now
+
+Explain select * from accounts1 where account_id=1; // This should be showing IndexInputFormat if this query is using Index

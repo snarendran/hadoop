@@ -1,0 +1,5 @@
+-- Pipelining example
+
+add jar HivePipelineUDFTest.jar
+create temporary function hashcode as 'com.altisource.hadoop.hive.HivePipelineUDFTest'
+select name, hashcode(toUpper(name)) from person;

@@ -1,0 +1,9 @@
+# importing all the tables
+
+sudo -u hdfs
+
+sqoop import-all-tables \
+--connect jdbc:mysql://localhost:3306/sqoop \
+--username sqoop \
+--password sqoop
+--exclude-tables cities,countries

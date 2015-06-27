@@ -1,0 +1,38 @@
+-- Partition Example: Employees
+
+-- Download the employee dataset from z:\Data management Dev\....\data\employee\employee.data\employees\employees
+-- Load it into HDFS using hue under /user/cloudera/employees
+
+-- Create a staging table and load it... 
+
+drop table employees_stg;
+
+CREATE TABLE employees_stg (
+	name STRING, salary FLOAT,  subordinates ARRAY<STRING>,  deductions MAP<STRING, FLOAT>,
+	address STRUCT <street:STRING, city:STRING, state:STRING, zip:INT>
+)  	ROW FORMAT DELIMITED
+	FIELDS TERMINATED BY '\001'
+	COLLECTION ITEMS TERMINATED BY '\002'
+	MAP KEYS TERMINATED BY '\003'
+	LINES TERMINATED BY '\n'
+	STORED AS TEXTFILE;
+	
+LOAD  DATA  INPATH  '/user/cloudera/employees/employees.dat' OVERWRITE INTO TABLE employees_stg;
+
+-- Create a partitioned managed table called employees as follows:
+
+CREATE TABLE employees (
+	name STRING, salary FLOAT,  subordinates ARRAY<STRING>,  deductions MAP<STRING, FLOAT>,
+	address STRUCT<street:STRING, city:STRING, state:STRING, zip:INT>
+)  PARTITIONED BY (state STRING)
+	ROW FORMAT DELIMITED
+	FIELDS TERMINATED BY '\001'
+	COLLECTION ITEMS TERMINATED BY '\002'
+	MAP KEYS TERMINATED BY '\003'
+	LINES TERMINATED BY '\n'
+	STORED AS TEXTFILE;
+	
+-- Load the data from staging as following
+INSERT into employees PARTITION (state) select  name,salary,subordinates,deductions,address,address.state from employees_stg ;
+
+-- Notice how data is partitioned by state 

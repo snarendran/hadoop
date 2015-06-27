@@ -1,0 +1,64 @@
+/*
+
+<note>
+	<to>Tove</to>
+	<from>Jani</from>
+	<nested1>
+    	<Nested2>
+			<Nested3>
+			    Nested3
+			</Nested3>
+		</Nested2>
+	</nested1>
+	<heading>Reminder</heading>
+	<body>Don't forget me this weekend!</body>
+</note>
+
+var ns = "<The above string"
+var nested3 = ns\\"nested3"
+println(nested3)    \\This will print "<Nested3>Nested3</Nested3>"
+
+*/
+
+
+import scala.xml._
+
+\\overridden scala function that fetches an element however deep it is...
+
+
+def getactivations(fileiterator: Iterator[String]): Iterator[Node] = {
+    val nodes = XML.loadString(fileiterator.mkString) \\ "activation"      
+	
+    nodes.toIterator
+}
+
+// Get the model name from a device activation record
+def getmodel(activation: Node): String = {
+   (activation \ "model").text
+}
+
+
+def getmodel2(fileiterator: Iterator[String]): Iterator[Node] = {
+    val nodes = XML.loadString(fileiterator.mkString) \\ "model"
+	
+    nodes.toIterator
+}
+
+
+// activation XML files
+var filename="hdfs://localhost/user/cloudera/activations/*.xml"    
+
+// parse each partition as a file into an activation XML record
+var activations = sc.textFile(filename)
+var activationTrees = activations.mapPartitions(getactivations)
+
+// Map each activation record to a device model name
+var models = activationTrees.map(getmodel)
+
+// Find the top 10 models
+models.top(10).foreach(println)
+
+//Find the sales of all models of iFruit
+val swapCount = modelcounts.map(_.swap)
+iFruitRDD = swapCount.filter{case (k,v)=>(v.contains("iFruit"))}
+iFruitRDD.collect().foreach(println)

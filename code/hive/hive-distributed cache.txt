@@ -1,0 +1,18 @@
+-- Hive Distributed Cache Example
+
+-- Create a shell script called 
+
+while read LINE  
+do
+	res=$(echo "scale=2;((9/5) * $LINE) + 32" | bc)
+echo $res
+done	
+
+-- Add the above shell script and reuse data from zip (Not a good example...but proves the point)
+ADD FILE  /home/cloudera/workspace/code/hive/ctof.sh;
+
+select zip_code from zip limit 10;
+SELECT  TRANSFORM(zip_code) USING 'ctof.sh' AS frnht FROM zip limit 10;
+
+SELECT TRANSFORM(zip_code) USING 'ctof.sh' AS convert FROM zip limit 10;
+ 

@@ -1,0 +1,14 @@
+-- Geo IP UDF example from https://github.com/edwardcapriolo/hive-geoip
+-- download the GeoIP.dat file from z:\Datamanagement...\data\Geo IP 
+-- download the jar files from z:\Datamanagement...\code\hive
+
+add file hdfs://192.168.174.129:8020/user/cloudera/geoip/GeoIP.dat;
+add jar  hdfs://192.168.174.129:8020/user/cloudera/external-jars/geo-ip.jar;
+add jar hdfs://192.168.174.129:8020/user/cloudera/external-jars/hive-udf-geo-ip-jtg.jar;
+
+
+create temporary function geoip as 'com.jointhegrid.udf.geoip.GenericUDFGeoIP';
+
+-- copy the dat file into unix /tmp directory
+
+select geoip('185.26.230.129', 'COUNTRY_NAME',  '/tmp/GeoIP.dat' ) from person; -- should return United Kingdom as it belongs to ba.co.uk; Try with google.com's ip address

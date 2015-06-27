@@ -1,0 +1,24 @@
+//844,482,155 lines in wiki
+
+import scala.xml._
+var wikiRDD = sc.textFile("/user/cloudera/wiki")
+
+//Returns the node
+def getNode(fileiterator: Iterator[String]): Iterator[Node] = {
+    val nodes = XML.loadString(fileiterator.mkString)\\""   	
+    nodes.toIterator
+}
+
+// Get the page from the node
+def getPage(node: Node): String = {
+   (node \ "page").text
+}
+
+
+var nodeRDD = wikiRDD.mapPartitions(getNode)
+var pageRDD = nodeRDD.map(getPage)
+
+pageRDD.take(1).foreach(println)
+pageRDD.count();
+
+wikiRDD.count();

@@ -1,0 +1,28 @@
+-- Emp Partition and bucket example
+
+
+-- Create paritioned table and load it
+create external table emp_stag (EmployeeID Int,FirstName String,Designation  String,Salary Int,Department String) row format delimited fields terminated by "," location '/user/cloudera/emp';
+
+
+
+create  table emp_parti (EmployeeID Int,FirstName String,Designation  String,Salary Int) PARTITIONED BY (Department String) row format delimited fields terminated by ","; 
+
+INSERT OVERWRITE TABLE emp_parti PARTITION(department) SELECT EmployeeID, FirstName,Designation,Salary,department FROM emp_stag; 
+
+-- Create bucketed table 
+
+create table emp_bucket (EmployeeID Int,FirstName String,Designation String,Salary Int,Department String) clustered by (department) into 3 buckets row format delimited fields terminated by ",";
+
+-- Now load it into buckets
+from emp_stag insert into table emp_bucket 
+       select employeeid,firstname,designation,salary,department;
+	   
+create table emp_parti_bucket (EmployeeID Int,FirstName String,Designation String,Salary Int) partitioned by(department string)  clustered by (designation) into 3 buckets row format delimited fields terminated by ",";
+
+from emp_stag insert into table emp_parti_bucket PARTITION (department="A") 
+       select employeeid,firstname,designation,salary;
+	    
+	
+	
+-- Partition & Bucket

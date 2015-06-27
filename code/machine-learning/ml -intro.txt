@@ -1,0 +1,22 @@
+//Machine Learning
+1) Data Cleansing (error in sourcing, storing, retrieving, transformation, pipelining etc)
+2) Exploratory Data Analysis (Bell La s)vs. Confirmation Data Analysis 
+   5 number summary - sample minimum, lower quartile, median, upper quartile, sample maximum - box plot, stem and leaf diagram
+   Summary Sets - Anscombe's Quartet 1973
+3) Supervisory Learning (kNN, Naive Bayes, Logistic Regression, Linear Regression?, Support Vector Machines, Random Forests)
+   Unsupervisory Techniques (Clustering, Factor Analysis, Latent Dirichlet Allocation)
+4) Normal Distrib, Central Limit Theorem (Th distribution of sum of n identically distributed random variables X approaches a normal distrib as n-> infinity)
+        t-test & ANOVA 
+    mean, variance, t-test, ANOVA -? assumes data are normally distributed
+5)  Other distribs  - Poisson D, Exponential D, Chi-Sq D, Zipf, Yule, Pareto, Binomaial, Multinomial
+
+ML-Lib 
+======
+1) Classification - SVM, Logistic Regression, Decision Trees, Naive Bayes, K-NN
+2) Regression - Linear, Lasso, Ridge, K-Neigherest Neighbor
+3) Misc - Alternating Least Squares, K-Means, SVD, Opt Primitives(SGD, L-BGFS)
+4) Colloborative Filtering
+5) Text Analysis
+6) Entity Resolution (ER)
+
+

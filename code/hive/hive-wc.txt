@@ -1,0 +1,14 @@
+
+-- Sample word count program in Hive
+-- Load 2cities.txt  from data\Charles Dickens directory into HDFS and create a managed table called 2cities 
+
+CREATE TABLE wc (line STRING);
+LOAD DATA INPATH '/user/cloudera/2cities/2cities.txt' OVERWRITE INTO TABLE wc;
+
+-- 
+ 
+SELECT splitword, count(1) AS count FROM
+            (SELECT explode(split(line, ' ')) AS splitword FROM wc) indwords
+group by splitword
+order by count desc;
+

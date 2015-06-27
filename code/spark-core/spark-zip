@@ -1,0 +1,23 @@
+val a = sc.parallelize(1 to 5)
+val b = sc.parallelize(101 to 105)
+val zrdd = a.zip(b)
+
+//(1,101)
+(2,102)
+(3,103)
+(4,104)
+(5,105)
+
+zrdd.collect().foreach(println)
+
+//Important - the size of the collection and the partition will have to be equal, else error
+
+val a = sc.parallelize(1 to 10)
+val b = sc.parallelize(101 to 105)
+val zrdd = a.zip(b)   //Error - cuz a and b rdds are not of the same length
+
+
+val a = sc.parallelize(1 to 5,1)
+val b = sc.parallelize(101 to 105, 3)
+val zrdd = a.zip(b)   //Error - cuz a and b rdds are of varying partition sizes
+ 

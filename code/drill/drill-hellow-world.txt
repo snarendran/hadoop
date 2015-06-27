@@ -1,0 +1,21 @@
+\\Drill from your windows Hosst
+
+https://drill.apache.org/docs/drill-in-10-minutes/
+
+
+
+wget http://getdrill.org/drill/download/apache-drill-1.0.0.tar.gz
+mkdir c:\apps
+cd c:\apps
+tar -xvzf apache-drill-1.0.0.tar.gz  
+
+cd c:\apps\apache-drill-1.0.0\bin 
+sqlline.bat -u "jdbc:drill:zk=local"
+
+!quit
+
+
+\\Now install the MapR Hive ODBC 64 bit driver
+\\ Configure the Hive Metastore
+
+\\Connect through Qlikview and enjoy

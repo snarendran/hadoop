@@ -1,0 +1,28 @@
+-- Hive  XML SerDe
+-- Data: z:\datamanagement-dev/../data/activations/*.xml
+ 
+	
+add jar '/mnt/hgfs/f/code/eclipseJars/hivexmlserde-1.0.5.1.jar'
+
+create external table activations (act_type string, act_num string, dev_id string, phone string, model string)
+row format serde 'com.ibm.spss.hive.serde2.xml.XmlSerDe'
+    with serdeproperties(
+		"column.xpath.act_type"="/activation/@type",
+		"column.xpath.act_num"="/activation/account-number/text()",
+		"column.xpath.dev_id"="/activation/device-id/text()",
+		"column.xpath.phone"="/activation/phone-number/text()",
+		"column.xpath.model"="/activation/model/text()"
+    )stored as
+    inputformat 'com.ibm.spss.hive.serde2.xml.XmlInputFormat'
+    outputformat 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+	LOCATION  '/user/cloudera/activations/'
+    tblproperties(
+		"xmlinput.start"="<activation timestamp",
+		"xmlinput.end"="</activation>"
+	);
+	 
+select distinct(model) from activations; -- Answer = 50 ; Took 3 min 37 seconds -> why??? Spark takes less than 10 seconds...
+	 
+	 
+	 
+	 

@@ -1,0 +1,7 @@
+ \\scala - print alternative lines as upper and lower
+
+def myCase(line:String,i:Int):String= { if (i %2==0) return line.toUpperCase else return line.toLowerCase}
+
+
+var int i=0
+file.take(10).foreach( line=> { i=i+1; println(myCase (line,i)) } )

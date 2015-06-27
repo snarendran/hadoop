@@ -1,0 +1,66 @@
+
+
+
+\\Configuration. Tested on Sandbox only
+
+cp /etc/hive/conf/hive-site.xml /etc/spark/conf
+vi /usr/lib/spark/bin/compute-classpath.sh and add the following  
+     CLASSPATH="$CLASSPATH:/usr/lib/hive/lib/*"
+
+Restart spark clusters
+
+-------
+
+
+--  A minus query example
+
+create external table comments (CHANGESRCE string, CHANGEDATE string, SYSTEMRECORD string, ADDRESS2 string, STREETNUMBER string,STREETNAME string, CITY string, STATE string, ZIP string, CNTYCDE string, CNTRYCDE string)
+ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE
+location '/user/cloudera/comments/'
+
+create external table comments2 (CHANGESRCE string, CHANGEDATE string, SYSTEMRECORD string, ADDRESS2 string, STREETNUMBER string,STREETNAME string, CITY string, STATE string, ZIP string, CNTYCDE string, CNTRYCDE string)
+ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE
+location '/user/cloudera/comments2/'
+
+
+---- A Minus B and B Minus A
+SELECT  a.*
+FROM comments a
+LEFT JOIN comments2 b
+   ON  a.CHANGESRCE = b.CHANGESRCE
+   AND a.CHANGEDATE = b.CHANGEDATE
+   AND a.ADDRESS2 = b.ADDRESS2
+WHERE b.changesrce is null;
+
+SELECT  a.*
+FROM comments2 a
+LEFT JOIN comments b
+   ON  a.CHANGESRCE = b.CHANGESRCE
+   AND a.CHANGEDATE = b.CHANGEDATE
+   AND a.ADDRESS2   = b.ADDRESS2
+WHERE b.CHANGESRCE is NULL;
+
+----- Run it on 100m data set
+ create external table comments_100m (CHANGESRCE string, CHANGEDATE string, SYSTEMRECORD string, ADDRESS2 string, STREETNUMBER string,STREETNAME string, CITY string, STATE string, ZIP string, CNTYCDE string, CNTRYCDE string)
+ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE
+location '/user/cloudera/comments-100m/'
+
+create external table comments2_100m (CHANGESRCE string, CHANGEDATE string, SYSTEMRECORD string, ADDRESS2 string, STREETNUMBER string,STREETNAME string, CITY string, STATE string, ZIP string, CNTYCDE string, CNTRYCDE string)
+ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE
+location '/user/cloudera/comments2-100m/'
+
+SELECT  a.CHANGESRCE,b.CHANGESRCE
+FROM comments2_100m a
+LEFT JOIN comments_100m b
+   ON  a.CHANGESRCE = b.CHANGESRCE
+   AND a.CHANGEDATE = b.CHANGEDATE
+   AND a.ADDRESS2   = b.ADDRESS2
+WHERE b.CHANGESRCE is NULL;

@@ -1,0 +1,18 @@
+-- Example of Update and delete in Hive
+
+set hive.txn.manager =org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+set hive.support.concurrency=true;
+set hive.enforce.bucketing = true;
+set hive.exec.dynamic.partition.mode =nonstrict;
+set hive.compactor.initiator.on= true ;
+set hive.compactor.worker.threads=0;
+
+create table personTxn (name string,age int)  
+CLUSTERED BY (age) INTO 2 BUCKETS STORED AS ORC TBLPROPERTIES("transactional"="true");
+
+
+INSERT INTO TABLE personTxn values ('Mark',10), ('Fred',20);
+
+-- Now run the update & delete
+update personTxn set name='Mark C' where age=10;
+delete from personTxn where age=10;

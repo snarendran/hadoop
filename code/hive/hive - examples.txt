@@ -1,0 +1,186 @@
+
+--Login as root/hadoop
+--Run this from /usr/lib/hive as follows:
+--./bin/hive -f </root/shared_folder/hive.txt> | tee <2>/root/shared_folder/hive_err>
+-- hive --auxpath /path/to/<jarfile.jar>
+-- The above explains that the data set is stored in a hadoop filesystem, typically HDFS, but can be local or S3.
+-- Page 443 discussion on metastore would help here..
+
+
+--======================================== Creating a Hive Table and Loading Data ========================
+
+
+--Create the Table
+CREATE TABLE comments2(loan_num INT, cmt_code STRING, user_name STRING, cmt_action STRING)
+ROW FORMAT  DELIMITED 
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+
+-- Might have to grant privileges if the creator of the table is other than the one who is loading
+
+-- Hive loads the data at hdfs://sandbox:8020/apps/hive/warehouse/<coments2>
+-- The default option is called managed table option where Hive puts it into the warehouse directory <Error in page #428. Hive puts it in <apps> directory rather than user directory
+
+
+ 
+ 
+--======================================== Creating an external table ========================
+
+ 
+--- To create EXTERNAL table 
+CREATE EXTERNAL TABLE comments2(loan_num INT, cmt_code STRING, user_name STRING, cmt_action STRING)
+ROW FORMAT  DELIMITED 
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+LOCATION '/user/root/external_cmts_table';
+
+-- Dropping an external data does NOT delete the corresponding External Table space. 
+-- While Creating tables marked external, Hive does NOT check if the path or file exists. Helpful for lazy loading
+
+--Load the table from a HDFS filesystem
+LOAD DATA  INPATH '/user/root/comments.csv'
+OVERWRITE INTO TABLE comments2;
+
+
+--Load the table from a local filesystem
+LOAD DATA LOCAL INPATH '/root/shared_folder/comments.csv'
+OVERWRITE INTO TABLE comments2;
+
+
+--======================================== Schema on Read vs. Schema on Write ========================
+
+-- Schema on Read vs. Schema on Write
+-- Sample enforcement
+-- The concept of managed vs. external table and how a single table can have two schemas
+
+-- Hive does not give you 3 things - indexing, locking (concurrency control), updates/inserts vs. appends
+-- However indexing can be achieved by using Hive on HBase <https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration>
+
+--======================================== HQL ========================
+
+
+-- HQL vs. SQL '92 compatibility
+-- Multi table insert and the flipping of syntax
+-- Also has transform, map, reduce fields
+-- Table 12.2 comparing HQL with SQL on page 423
+-- Inner, Outer Joins etc
+-- Subqueries with HQL
+
+--======================================== Creating Multi insert ========================
+
+FROM page_view_stg pvs
+INSERT OVERWRITE TABLE partitioned_comments2 PARTITION(dt='2008-06-08', user_name='kulkaran')
+       SELECT * from comments2 WHERE comments2.user_name = 'kulkaran'
+INSERT OVERWRITE TABLE partitioned_comments2 PARTITION(dt='2008-06-08', user_name='MiscUsers')
+       SELECT * from comments2 WHERE comments2.user_name != 'kulkaran'
+ 
+--======================================== Hive Data Type & Complex Data Type ==================
+
+-- Complex Type
+CREATE TABLE complex (
+col1 ARRAY<INT>,
+col2 MAP<STRING, INT>,
+col3 STRUCT<a:STRING, b:INT, c:DOUBLE>
+);
+
+
+--======================================== Partitioning ========================
+
+-- Create a partition of user and cmt_code
+
+CREATE TABLE comments2(loan_num INT, cmt_code STRING, user_name STRING, cmt_action STRING)
+PARTITIONED BY (uname STRING, ccode STRING)
+ROW FORMAT  DELIMITED 
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+-- Now load the data into partitions
+-- Note that the entire data would be loaded into the partition - as no source filters were applied
+-- Partitions can also be created "on the fly" (dynamic partitionining should be enabled)
+-- Consider cardinality while partitioning data (e.g an U.S state would be a better choice than txn id). Wrong choice of cardinality would result in too fragmented file sets - resulting in many inffecient table scans.
+
+ 
+LOAD DATA LOCAL INPATH '/root/shared_folder/comments.csv'
+OVERWRITE INTO TABLE comments2
+PARTITION (uname='kulkaran', ccode='CS');
+
+--======================================== DYNAMIC PARTITION ========================
+hive.exec.dynamic.partition = true
+-- Create dyn_partition_comments2 table first
+INSERT OVERWRITE TABLE dyn_partition_comments2 
+PARTITION (user_name)
+SELECT user_name, cmt_code, cmt_action,load_num
+FROM comments2;
+
+show partitions logs; 
+--======================================== BUCKETING ========================
+-- Create 4 buckets based on user name and sort them as you store it.
+-- For this copy from the unbucketed comments2 table
+-- In the buckets below, each user is restricted to a single bucket & each bucket gets certain users
+-- This implies that data in buckets may not be "bucketed/partitioned" optimally - which can result in a join problem 
+-- Cardinality problem can be resolved by bucketing. For example, if txn-id is used in several joins, then it is ideal to group similar txn-ids together by returning an user-defined hash function.
+
+set map.reduce.tasks = 4;
+
+CREATE TABLE buckted_comments2 (loan_num INT, cmt_code STRING, user_name STRING, cmt_action STRING)
+clustered by (user_name) SORTED BY (user_name ASC) into 4 buckets
+ROW FORMAT  DELIMITED 
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+-- Now Load the data
+INSERT OVERWRITE TABLE bucketed_comments2
+SELECT * FROM comments2;
+
+-- Now Query the bucket -- There are 247 unique users, whereas there are 247*4=~1000 distinct users overall
+
+SELECT count (distinct user_name) FROM bucketed_comments2 
+TABLESAMPLE(BUCKET 4 OUT OF 4 ON user_name); 
+
+
+
+--======================================== SerDe & File Formats ========================
+-- Specified by ROW FORMAT (SerDe) and STORED AS are used for specifying field separation and line separation resp
+-- By default, the default ROW FORMAT (SerDe) is Ctrl-A ('\001')
+-- The default STORED AS format is new line "\r\n"
+-- Ctrl-B is the SerDe for Collections (ARRAY & STRUCT)
+-- Ctrl-C for delimiting MAP 
+-- How does SerDe work when the collection data type contains objects??
+-- Lazy SerDe
+ 
+ 
+--======================================== Joins ========================
+-- Only Equijoin is supported
+-- Left Outer, Right Outer, Full Outer Join
+-- SELECT sales.*, things.* FROM sales JOIN things ON (sales.id = things.id);
+-- Map Join 
+-- Hints in Hive
+-- IN is not supported
+-- SELECT * FROM things WHERE things.id IN (SELECT id from sales);
+-- The above is NOT supported and can be written as
+-- SELECT * FROM things LEFT SEMI JOIN sales ON (sales.id = things.id);
+-- SET hive.optimize.bucketmapjoin=true;
+-- View
+--======================================== UDF, UDAF, UDTF ========================
+
+
+Library->Package
+File   ->Class (loosely)
+function->methods
+	   
+
+-- UDF : Row->Row
+-- UDAF: Multiple Rows->Single Row
+-- UDTF: One Row-> Multiple Rows
+-- Create a class, say HiveUDFTest which contains atleast one method called evaluate() and extends UDF class
+-- Hive uses introspection to verify any signature corresponding to the method evaluate()
+-- Compile and export as JAR and export it into Hive Path
+-- use the following syntax ./bin/hive --auxpath /root/shared_folder/HiveUDFTest.jar -f /root/shared_folder/temp.txt
+-- Register the UDF as a function in Hive
+
+CREATE TEMPORARY FUNCTION sayHello AS 'com.altisource.hadoop.hive.HiveUDFTest';
+
+-- The above explains that the data set is stored
+select sayHello ("Naren ") from comments2;
+

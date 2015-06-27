@@ -1,0 +1,50 @@
+-- Hive Wiki Database
+
+add jar '/mnt/hgfs/f/code/eclipseJars/hivexmlserde-1.0.5.1.jar'
+
+create external table wiki (page string, title string, restrictions string, revision map<string,string>)
+row format serde 'com.ibm.spss.hive.serde2.xml.XmlSerDe'
+    with serdeproperties(
+		"column.xpath.page"="/page/title/text()",
+		"column.xpath.title"="/page/title/text()",
+		"column.xpath.restrictions"="/page/restrictions/text()",
+		"column.xpath.revision"="/page/revision/*"
+    )stored as
+    inputformat 'com.ibm.spss.hive.serde2.xml.XmlInputFormat'
+    outputformat 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+	LOCATION  '/user/cloudera/wiki/india'
+    tblproperties(
+		"xmlinput.start"="<page>",
+		"xmlinput.end"="</page>"
+	);
+	
+	
+//How many pages are dedicated for india
+select count(page) from wiki;  // Result: 23 pages
+
+select page from wiki
+	where (revision["text"] rlike ("Indus Valley Civilization"))
+
+// How many pages within the India category refer to India
+select page from wiki
+	where (revision["text"] rlike (" Bangalore "))
+
+	
+	
+	create external table wiki2 (doc_id string, url string, title string)
+row format serde 'com.ibm.spss.hive.serde2.xml.XmlSerDe'
+    with serdeproperties(
+		"column.xpath.doc_id"="/page/title/@doc_id",
+		"column.xpath.url"="/page/title/@url",
+      	"column.xpath.title"="/page/title/@title",
+		"column.xpath.text"="/page/restrictions/text()"
+    )stored as
+    inputformat 'com.ibm.spss.hive.serde2.xml.XmlInputFormat'
+    outputformat 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+	LOCATION  '/user/cloudera/wiki'
+    tblproperties(
+		"xmlinput.start"="<doc>",
+		"xmlinput.end"="</doc>"
+	);
+
+	

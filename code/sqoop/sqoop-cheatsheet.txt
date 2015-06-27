@@ -1,0 +1,46 @@
+# .bashrc
+
+# sqoop help
+# sqoop version # uses 1.4.4.2
+# sqoop TOOL PROPERTY_ARGS SQOOP_ARGS [-- EXTRA_ARGS]
+
+
+
+sqoop import --connect jdbc:mysql://10.206.112.83/informatica_source --username root1 --password root1 --table company_lkp | tee 2>/root/shared_folder/err
+
+
+
+#=========================================== Source should grant permision =============
+GRANT ALL ON company_lkp TO root1;
+#=============================================== Sqoop Import into HDFS ========================
+sqoop import --connect jdbc:mysql://10.206.112.83/informatica_source --username root1 --password root1 --table company_lkp | tee 2>/root/shared_folder/err
+# Results in /user/root/<table name as file>
+# To specify a target directory :
+sqoop import --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --table company_lkp --warehouse-dir /apps/sqoop/warehouse | tee 2>/root/shared_folder/err
+# To apply filters
+sqoop import --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --table company_lkp --warehouse-dir /apps/scoop/warehouse --where "CMPNY_CD='ABC'" | tee 2>/root/shared_folder/err
+# For Bulk Import, bypass JDBC drivers and utilize native utils
+# Out of the box, Sqoop supports MySQL and Postgres - mySQLImport & mySQLDump
+#Qn: How do we do it for Oracle?
+sqoop import --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --table company_lkp --warehouse-dir /apps/scoop/warehouse  --direct | tee 2>/root/shared_folder/err
+#Introducing Parallelism - Parallel & Direct in the example below
+sqoop import --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --table company_lkp --warehouse-dir /apps/scoop/warehouse  --direct  --num-mappers 10| tee 2>/root/shared_folder/err
+
+#Importing all tables
+sqoop import-all-tables --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --warehouse-dir /apps/scoop/warehouse   
+
+#To increase parallelism 
+sqoop import-all-tables --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --warehouse-dir /apps/scoop/warehouse  --direct  --num-mappers 10
+
+#=============================================== Incremental Import ========================
+#Import everything > --last value (here 3). This is the max of the colum (id) mentioned in check-column
+sqoop job  import --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --table company_lkp --warehouse-dir /apps/scoop/warehouse  --incremental append   --check-column id   --last-value    3    
+#You can convert this to use timestamp based approach with --incremental lastModified 
+
+
+
+#=============================================== Incremental Import of Last Modified jobs ========================
+
+sqoop job --create last_visit import --connect jdbc:mysql://10.206.206.164/informatica_source --username root1 --password root1 --table company_lkp --warehouse-dir /apps/scoop/warehouse  --incremental lastModified   --check-column id   --last-value    3    | tee 2>/root/shared_folder/err
+
+ 

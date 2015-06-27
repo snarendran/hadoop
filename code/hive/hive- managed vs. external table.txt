@@ -1,0 +1,19 @@
+-- Download TwitterData.txt from http://hortonworks.com/hadoop-tutorial/using-hive-data-analysis/ or from z:\Datamanagement-Dev\HDP Sessions\Data\Twitter Data\TwitterData.txt
+-- upload the data to HDFS under /user/cloudera/TwitterData.txt
+
+-- Create the Schema and load the data. This is the traditional RDBMS style
+-- This command lets Hive manage the underlying data. By default the underlying HDFS directory would be under /user/hive/warehouse
+CREATE TABLE TwitterExampletextexample(
+        tweetId BIGINT, username STRING,
+        txt STRING, CreatedAt STRING,
+        profileLocation STRING,
+        favc BIGINT,retweet STRING,retcount BIGINT,followerscount BIGINT)
+    COMMENT 'This is the Twitter streaming data'
+    ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY '\t'
+    STORED AS TEXTFILE;
+
+LOAD  DATA  INPATH  '/user/cloudera/Twitterdata.txt' OVERWRITE INTO TABLE TwitterExampletextexample;
+
+-- External Tables on the other hand allow users to load the data first, define the schema and then point the schema to the underlying data
+-- For example, refer code under NYSE.txt file.

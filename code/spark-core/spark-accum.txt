@@ -1,0 +1,34 @@
+val accum = sc.accumulator(0, "My Accumulator")
+sc.parallelize(Array(1, 2, 3, 4)).foreach(x => accum += x)
+
+\\ The following can be achieved by a filter function as well
+ 
+
+val file = sc.textFile("/user/cloudera/charles_dickens/") 
+val blankLines = sc.accumulator(0, "Test Accumulator")
+val callSigns = file.foreach(line=> { if (line=="") {blankLines +=  1} else line.split("")  } )
+blankLines.value
+
+
+file.filter(line=>line.equals(""))
+
+\\However try this without accumulators. Both broadcast and Accumulators wont work
+val file = sc.textFile("/user/cloudera/charles_dickens/") 
+val accum = sc.accumulator(0, "Test Accumulator")
+
+val upper = file.foreach(line=>{ 
+		    accum +=1 ;
+			if (accum.value %2==0) { 
+				line.toUpperCase  
+			} 
+})
+
+
+val bc = sc.broadcast(0)
+
+val upper = file.foreach(line=>{ 
+		    bc +=1 ;
+			if (bc.value %2==0) { 
+				line.toUpperCase  
+			} 
+})

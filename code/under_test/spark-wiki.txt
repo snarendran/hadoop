@@ -1,0 +1,58 @@
+spark-shell --executor-cores 2 --num-executors 4 --executor-memory 2g --master yarn-client 
+
+import scala.xml._
+
+// Given a partition containing multi-line XML, parse the contents. 
+// Return an iterator of activation XML nodes contained in the partition
+
+def getPages(fileiterator: Iterator[String]): Iterator[Node] = {
+    val nodes = XML.loadString(fileiterator.mkString) \\ "page"
+    nodes.toIterator
+}
+
+// Get the model name from a device activation record
+def getText(activation: Node): String = {
+   (activation \ "text").text
+}
+
+
+// activation XML files
+var filename= "hdfs://146.148.24.244:8020/user/cloudera/wiki/enwiki-latest-pages-articles.xml.bz2"
+
+// parse each partition as a file into an activation XML record
+var wikiRDD = sc.textFile(filename,100)
+var pages = wikiRDD.mapPartitions(getPages)
+var pageTexts = pages.map (getText)
+
+
+
+var ipages=pageTexts.filter(k=>k.contains("India"))
+//var pages = wikiRDD.map (getPages)
+
+ipages.take(1).foreach(println)
+
+
+=========
+
+// Map each activation record to a device model name
+var models = activationTrees.map(getmodel)
+
+// Show the partitioning 
+println(models.toDebugString)
+
+// count activations by model
+var modelcounts = models.
+    map(model => (model,1)).
+    reduceByKey((v1,v2) => v1+v2)
+
+// Show the partitioning 
+println(modelcounts.toDebugString)
+
+// display the top 10 models
+for (pair <- modelcounts.map(_.swap).top(10))
+    println("Model %s (%s)".format(pair._2,pair._1))
+
+	
+	XML.loadString(fileiterator.mkString) \\ "page"
+	
+	wikiRDD.map(s=>s\\"page")

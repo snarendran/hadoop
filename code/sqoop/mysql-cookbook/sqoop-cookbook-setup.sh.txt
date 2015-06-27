@@ -1,0 +1,6 @@
+
+
+sudo mysql -u root -p
+
+//Open mysq.credentials.sql file and copy and paste the contents it in mysql window. This will create db, tables and users.
+//open mysql.tables.sql file and copy and paste the contents in mysql window. This will populate the db with sample data set

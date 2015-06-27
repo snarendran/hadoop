@@ -1,0 +1,56 @@
+-- Complex Data Type: Employees
+-- Source: Programming Hive Book
+-- Download the employee dataset from z:\Data management Dev\....\data\employee\employee.data\employees\employees
+-- Load it into HDFS using hue under /user/cloudera/employees
+
+-- Create a staging table and load it... 
+
+drop table employees_stg;
+
+CREATE TABLE employees_stg (
+	name STRING, salary FLOAT,  subordinates ARRAY<STRING>,  deductions MAP<STRING, FLOAT>,
+	address STRUCT <street:STRING, city:STRING, state:STRING, zip:INT>
+)  	ROW FORMAT DELIMITED
+	FIELDS TERMINATED BY '\001'
+	COLLECTION ITEMS TERMINATED BY '\002'
+	MAP KEYS TERMINATED BY '\003'
+	LINES TERMINATED BY '\n'
+	STORED AS TEXTFILE;
+	
+LOAD  DATA  INPATH  '/user/cloudera/employees/employees.dat' OVERWRITE INTO TABLE employees_stg; 
+
+
+select name, salary, subordinates, deductions,address.street, address.city, address.zip from employees_stg;
+select name, salary, subordinates[0]  sub1, subordinates[11]  sub11, deductions,address.street, address.city, address.zip from employees_stg;
+
+select name, salary, subordinates[0]  sub1, subordinates[11]  sub11, deductions['Federal Taxes'] FedTaxes ,address.street, address.city, address.zip from employees_stg;
+
+
+-- Table generating functions
+
+SELECT explode(subordinates) AS sub FROM employees_stg;
+-- Try the following- Results in Error
+SELECT name, explode(subordinates) AS sub FROM employees;
+
+SELECT name, sub  FROM employees_stg LATERAL VIEW explode(subordinates) subView AS sub;
+
+
+
+
+-- The eqvt JSON structure is as follows
+{
+"name": "John Doe",
+"salary": 100000.0,
+"subordinates": ["Mary Smith", "Todd Jones"],
+"deductions": {
+"Federal Taxes": .2,
+"State Taxes": .05,
+"Insurance": .1
+},
+"address": {
+"street": "1 Michigan Ave.",
+"city": "Chicago",
+"state": "IL",
+"zip": 60600
+}
+}

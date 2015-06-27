@@ -1,0 +1,6 @@
+
+SELECT a.ymd, a.price_close, b.price_close  FROM stocks a JOIN stocks b ON a.ymd = b.ymd  WHERE a.symbol = 'AAPL' AND b.symbol = 'IBM';
+
+SELECT a.ymd, a.price_close, b.price_close
+FROM stocks a JOIN stocks b ON a.ymd <= b.ymd
+WHERE a.symbol = 'AAPL' AND b.symbol = 'IBM';

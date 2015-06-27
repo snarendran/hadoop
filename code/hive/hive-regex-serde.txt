@@ -1,0 +1,35 @@
+-- Sample from GiHub: May 3 11:52:54 cdh-dn03 init: tty (/dev/tty6) main process (1208) killed by TERM signal
+-- Sample Data: May  3 11:52:54 cdh-dn03 init: tty (/dev/tty6) main process (1208) killed by TERM signal
+-- Month   = May  
+-- Day     = 3 
+-- Time    = 11:52:54 
+-- Node    = cdh-dn03 
+-- Process = init: 
+-- Log msg = tty (/dev/tty6) main process (1208) killed by TERM signal
+
+-- Create a logparser table with input and output specified as SerDeProperties
+
+CREATE EXTERNAL TABLE logParser(
+month_name STRING,
+day STRING,
+time STRING,
+host STRING,
+event STRING,
+log STRING)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.RegexSerDe' 
+WITH SERDEPROPERTIES (
+"input.regex" = "(\\w+)\\s+(\\d+)\\s+(\\d+:\\d+:\\d+)\\s+(\\w+\\W*\\w*)\\s+(.*?\\:)\\s+(.*$)",
+"output.format.string" = "%1$s %2$s %3$s %4$s %5$s %6$s" )
+stored as textfile
+location '/user/cloudera/regex';
+
+
+select month_name,day,time from logParser;
+
+-- push some data
+insert into table logparser
+      values( 'Jun','01','10:24:10', 'localhost', 'hive:', 'Hive SerDe Test')    
+
+ 
+ 
+  

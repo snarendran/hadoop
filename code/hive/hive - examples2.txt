@@ -1,0 +1,26 @@
+ -- This example follows the spec mentioned at http://hortonworks.com/hadoop-tutorial/partner-tutorial-microsoft
+-- Upload all the folders under z:\HDP Sessions\...\data\NYSE to /user/cloudera/NYSE
+ 
+-- Create table as an external table
+create external table price_data (stock_exchange string, symbol string, trade_date string, open float, high float, low float, close float, volume int, adj_close float) row format delimited fields terminated by ',' stored as textfile location '/user/cloudera/nyse/nyse_prices';
+create external table dividends_data (stock_exchange string, symbol string, trade_date string, dividend float) row format delimited fields terminated by ',' stored as textfile location '/user/cloudera/nyse/nyse_dividends';
+create external table s_p (symbol string, name string, sector string, location string) row format delimited fields terminated by '\t' stored as textfile location '/user/cloudera/nyse/s_p';
+create external table zip (zip_code string, latitude string, longitude string, city string, state string, county string) row format delimited fields terminated by ',' stored as textfile location '/user/cloudera/nyse/zip';
+
+-- Create an aggregate table - a table that joins price_data and dividends data
+create table yearly_aggregates (symbol string, year string, high float, low float, average_close float, total_dividends float) row format delimited fields terminated by ',' stored as textfile location '/user/cloudera/nyse/stock_aggregates';
+
+-- Create an aggregate table
+insert overwrite table yearly_aggregates select a.symbol, year(a.trade_date), max(a.high), min(a.low),  avg(a.close), sum(b.dividend) from price_data a left outer join dividends_data b on (a.symbol = b.symbol and a.trade_date = b.trade_date) group by a.symbol, year(a.trade_date);
+
+-- Create a query
+select * from price_data where symbol = 'IBM';
+
+-- Qlikview Queries
+-- 
+select symbol, high, low, city, state, zip_code) from price_data a, s_p b, zip c
+where a.symbol=b.symbol and b.location=c.city;
+
+ 
+
+ 

@@ -1,0 +1,36 @@
+-- Hive XML Example
+-- Load data/XMLTest/test.xml into HDFS
+-- Also, try with data/XMLTest/test2.xml into HDFS
+
+Create TABLE xmltable(xmldata string) STORED AS TEXTFILE;
+LOAD DATA  INPATH '/user/cloudera/xml/test.xml' OVERWRITE INTO TABLE xmltable;
+
+CREATE VIEW xmlview (id,genre,price)
+AS SELECT
+	xpath(xmldata, '/catalog[1]/book[1]/id'),
+	xpath(xmldata, '/catalog[1]/book[1]/genre'),
+	xpath(xmldata, '/catalog[1]/book[1]/price')
+FROM xmltable;
+
+CREATE TABLE xmlfinal AS SELECT * FROM xmlview;
+
+SELECT * FROM xmlfinal WHERE id ='11
+
+-----
+
+--Note only test2.xml will work as the elements are stored in a single line as opposed to test1.xml 
+
+Create TABLE xmltable2(xmldata string) STORED AS TEXTFILE;
+LOAD DATA  INPATH '/user/cloudera/xml/test2.xml' OVERWRITE INTO TABLE xmltable2;
+
+CREATE VIEW xmlview2 (id,genre,price)
+AS SELECT 
+	xpath_string (xmldata, '/catalog[1]/book[1]/id'),
+	xpath_string (xmldata, '/catalog[1]/book[1]/genre'),
+	xpath_string (xmldata, '/catalog[1]/book[1]/price')
+FROM xmltable2;
+
+
+CREATE  TABLE xmlfinal2 AS SELECT * FROM xmlview2;
+
+SELECT * FROM xmlfinal2 WHERE id ='11

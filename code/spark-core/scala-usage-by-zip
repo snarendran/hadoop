@@ -1,0 +1,10 @@
+//Scala - Net access
+val logsRDD = sc.textFile("/user/cloudera/weblogs/*.log").map(line=>line.split(' '))
+val actsRDD = sc.textFile("/user/cloudera/accounts/accounts.csv").map(line=>line.split(','))
+ 
+val uidRDD = logsRDD.map(fields=>(fields(2),1)).reduceByKey((v1,v2)=>(v1+v2))  //Count it. Result is a collection of (uid,cnt)
+val actsUIDRDD = actsRDD.map(fields=>(fields(0), (fields(3),fields(4),fields(8)))) //(uid,(fname, lname,zip)
+
+val resRDD = uidRDD.join(actsUIDRDD) //(uid, (cnt,fname,lname,zip))
+val sortedResRDD = resRDD.sortBy( c => c._2,false )
+sortedResRDD.take(10).foreach(println) //Result = ID 1903, Hits = 1603, fName= Powell, lName= , zip =

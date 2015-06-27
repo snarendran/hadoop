@@ -1,0 +1,17 @@
+-- An example of tranform operation by leveraging unix shell command
+-- Now run an UDF function by pipelining with Unix command
+-- We are reusing the wc table
+
+select transform (line) using 'grep -i the' As X from wc) cnt
+
+
+
+--- Now use the hashcode UDF written earlier and use it to create the hashcode of each line of text from the "Tale of Two Cities"
+ADD JAR /home/cloudera/workspace/code/hive/HivePipelineUDFTest.jar;
+create temporary function hashcode as 'com.altisource.hadoop.hive.HivePipelineUDFTest';
+
+
+select hashcode(X) from (select transform (line) using 'grep -i the' As X from wc) cnt  limit 10;
+
+select hX from (select transform (line) using 'grep -i the' As X from wc) cnt  limit 10;
+

@@ -1,0 +1,31 @@
+ -- The corresponding data is found in z:\Data Management Dev\...\data\Twitter Data
+ 
+ -- Upload this data into HDFS /user/cloudera/twitter
+ 
+  CREATE TABLE twitter_stg (
+        tweetId BIGINT, username STRING,
+        txt STRING, CreatedAt STRING,
+        profileLocation STRING,
+        favc BIGINT,retweet STRING,retcount BIGINT,followerscount BIGINT)
+    COMMENT 'This is the Twitter streaming data'
+    ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY '\t'
+    STORED AS TEXTFILE;
+
+    LOAD  DATA  INPATH  '/user/cloudera/twitter/Twitterdata.txt' OVERWRITE INTO TABLE twitter_stg;
+ 
+  
+	
+	CREATE TABLE twitter_bkt (
+        tweetId INT, username BIGINT,
+        txt STRING,CreatedAt STRING,favc INT,retweet STRING,retcount INT,   followerscount INT)
+    COMMENT 'This is the Twitter streaming data'
+    PARTITIONED BY( profileLocation STRING)
+    CLUSTERED BY(tweetId) INTO 2 BUCKETS
+    ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY '\t'
+    STORED AS TEXTFILE;
+
+    set hive.enforce.bucketing = true; 
+    FROM twitter_stg
+    INSERT OVERWRITE TABLE twitter_bkt PARTITION (profileLocation="Chicago")    SELECT tweetId,username,txt,CreatedAt,favc,retweet,retcount,followerscount       where profileLocation='Chicago' limit 100;

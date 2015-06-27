@@ -1,0 +1,36 @@
+-- The schema on read principle allows you to store data into HDFS (Consequently in Hive) without worrying about the underlying structure of the data.
+-- At write time, no constraints are enforced if there is a data type violation
+-- This allows for multiple schemas to be defined on the same dataset - providing enormous flexibility
+-- Making a change is also fairly easy. 
+
+-- Copy person.txt and person2.txt into HDFS /user/cloudera/person.txt and /user/cloudera/person2.txt 
+
+CREATE TABLE person (
+	name STRING,
+	age  BIGINT
+) COMMENT 'Schema on Read Example'
+ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE;
+
+	
+LOAD  DATA  INPATH  '/user/cloudera/person.txt' OVERWRITE INTO TABLE person;
+
+select * from person;
+
+LOAD  DATA  INPATH  '/user/cloudera/person2.txt'  INTO TABLE person;
+
+-- The following statement would return null for those names whose ages are non-integers
+select * from person; 
+
+
+
+--- Now create another schema this time with age as STRING
+CREATE EXTERNAL TABLE person2 (
+	name STRING,
+	age  STRING
+) COMMENT 'Schema on Read Example'
+ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE
+	location '/user/hive/warehouse/person'

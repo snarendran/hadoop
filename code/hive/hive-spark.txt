@@ -1,0 +1,26 @@
+-- Hive Wiki Database
+
+add jar '/mnt/hgfs/f/code/eclipseJars/hivexmlserde-1.0.5.1.jar'
+
+create external table wiki (page string, title string, restrictions string, revision map<string,string>)
+row format serde 'com.ibm.spss.hive.serde2.xml.XmlSerDe'
+    with serdeproperties(
+		"column.xpath.page"="/page/title/text()",
+		"column.xpath.title"="/page/title/text()",
+		"column.xpath.restrictions"="/page/restrictions/text()",
+		"column.xpath.revision"="/page/revision/*"
+    )stored as
+    inputformat 'com.ibm.spss.hive.serde2.xml.XmlInputFormat'
+    outputformat 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+	LOCATION  '/user/cloudera/wiki'
+    tblproperties(
+		"xmlinput.start"="<page>",
+		"xmlinput.end"="</page>"
+	);
+	
+	
+ 
+//In how many pages does Altisource find mention
+select page from wiki
+	where (revision["text"] rlike ("Altisource"))
+

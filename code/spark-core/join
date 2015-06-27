@@ -1,0 +1,12 @@
+val rdd = sc.textFile("/user/cloudera/emp")// RDD of string (each element is a line)
+rdd.collect().foreach(println)         
+val rdd2 = rdd.map(s=>s.split(","))   // RDD of Array[String] (each element is an Array of string)
+rdd2.collect().foreach(println)
+val rdd3 = rdd2.map(s=>(s(0),s))      //Pair RDD of String, Array[String]
+rdd3.collect().foreach(println)
+
+
+val rdd4 = rdd3.join(rdd3).sortByKey()
+rdd4.collect().foreach(println)
+
+rdd4.collect().foreach ((s,(k,v))=>println(k  ))

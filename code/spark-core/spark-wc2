@@ -1,0 +1,13 @@
+ 
+
+val fileRDD = sc.textFile("/user/cloudera/charles_dickens/")
+val wcRDD = fileRDD.flatMap(word=>word.split(' ')).map(fields=>(fields(0),1)).reduceByKey((key1, key2)=>key1+key2)
+
+
+val revRDD = wcRDD.map(pair => (pair._2,pair._1)).groupByKey().sortbyKey(false)
+revRDD.take(10).foreach(t=> (println (t._1 + "," + t._2.asList() )))
+revRDD.saveAsTextFile("user/cloudera/sparkwc")
+
+
+//what if you want to know how many instances of a word say "and" is available
+val redRDD = sortedRDD2.reduceByValue((pair => pair._2,pair._1)

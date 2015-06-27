@@ -1,0 +1,18 @@
+//Parse wiki to find out the latest wiki english extraction files
+//Look for the files that start with enwiki-latest-pages-meta-history and end with ‘bz2′
+
+val wikiRDD = sc.textFile("/user/cloudera/wiki/wiki-en-xtract-toc").filter(line=> (line.contains("enwiki-latest-pages-") && (line.contains ("bz2 "))))
+val wordRDD = wikiRDD.map(line=>(line.split("\\s+")) ) //Use regex to eat extra white spaces and pick the last token which has the bytes
+val wpairRDD = wordRDD.map(word=>(word(0),word(3)) )
+
+wpairRDD.collect().foreach(println)
+
+ 
+//Now count the total size
+val wcountRDD = wpairRDD.map( w =>(1, w._2.toLong)).reduceByKey((v1,v2) => v1+v2).values //47,842,798,601  => 47 GB of English Text
+wcountRDD.collect().foreach(println)
+
+// The following are the 3 link address
+// http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles-multistream.xml.bz2
+// http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2
+// http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-meta-current.xml.bz2
